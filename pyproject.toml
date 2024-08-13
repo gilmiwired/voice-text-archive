@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "whispertonotion"
+version = "0.1.0"
+description = ""
+authors = ["gilmi <65973449+gilmiwired@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+torch = "2.3.0"
+numpy = "^2.0.1"
+openai-whisper = { git = "https://github.com/openai/whisper.git", rev = "v20231117" }
+sounddevice = "^0.5.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
