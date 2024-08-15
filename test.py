@@ -14,7 +14,7 @@ def post_audio_file(url, file_path, api_key):
 url = ""
 api_key = ''
 
-file_path = 'sample.wav'
+file_path = ''
 response = post_audio_file(url, file_path, api_key)
 
 print("Status Code:", response.status_code)
