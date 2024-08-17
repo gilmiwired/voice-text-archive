@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.routers.message import router as task
 
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
