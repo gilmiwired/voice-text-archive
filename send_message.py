@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+from typing import Dict, List, Optional
 
 import google.generativeai as genai
 import requests
@@ -27,11 +28,20 @@ NOTION_API_KEY = os.getenv("NOTION_API_KEY") or ""
 
 genai.configure(api_key=GOOGLE_API_KEY)
 
+
 @retry(wait=wait_random_exponential(min=1, max=20), stop=stop_after_attempt(3))
-def get_last_block_id(page_id: str):
+def get_last_block_id(page_id: str) -> Optional[str]:
+    """指定されたページIDの最後のブロックIDを取得します。
+
+    Args:
+        page_id (str): NotionページのID
+
+    Returns:
+        Optional[str]: ブロックID（取得できなかった場合はNone）
+    """
     url = f"https://api.notion.com/v1/blocks/{page_id}/children"
     headers = {
-        "Authorization": f'Bearer {os.getenv("NOTION_API_KEY")}',
+        "Authorization": f"Bearer {NOTION_API_KEY}",
         "Notion-Version": "2022-06-28",
         "Content-Type": "application/json",
     }
@@ -43,8 +53,15 @@ def get_last_block_id(page_id: str):
     return None
 
 
-def format_explanation(explanation_data):
-    """Format the explanation data into a readable string."""
+def format_explanation(explanation_data: List[Dict[str, str]]) -> str:
+    """説明データを整形して返します。
+
+    Args:
+        explanation_data (List[Dict[str, str]]): 説明データのリスト
+
+    Returns:
+        str: 整形された説明テキスト
+    """
     formatted_explanation = ""
     for item in explanation_data:
         formatted_explanation += f"{item['word']}:\n{item['explanation']}\n\n"
@@ -52,18 +69,16 @@ def format_explanation(explanation_data):
 
 
 def archive_notion(archive_data: str) -> str:
-    """
-    Uses Gemini API to retrieve content based on the archive_data and uploads it to a Notion page.
+    """指定されたデータを使用してNotionページにアーカイブします。
 
     Args:
-        archive_data (str): Description of the data to be archived.
+        archive_data (str): アーカイブするデータの説明
 
     Returns:
-        str: Status message of the operation.
+        str: 操作のステータスメッセージ
     """
     model = "gemini-1.5-pro-latest"
-    google_api_key = os.getenv("GOOGLE_API_KEY")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={google_api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GOOGLE_API_KEY}"
     headers = {"Content-Type": "application/json"}
 
     prompt_part = """
@@ -98,21 +113,21 @@ The information should be provided on a single line without line breaks. Please 
 
     response_data = response.json()
     try:
-        parts_data = json.loads(response_data["candidates"][0]["content"]["parts"][0]["text"])
+        parts_data = json.loads(
+            response_data["candidates"][0]["content"]["parts"][0]["text"]
+        )
         content = format_explanation(parts_data)
     except json.JSONDecodeError:
         content = response_data["candidates"][0]["content"]["parts"][0]["text"]
 
-
-    page_id = "a88cbcd8ead44afab62ef9a0ea05b132"
+    page_id = ""
     block_id = get_last_block_id(page_id)
     if not block_id:
         return "Failed to find the last block in the page."
 
-    notion_api_key = os.getenv("NOTION_API_KEY")
     blocks_url = f"https://api.notion.com/v1/blocks/{block_id}/children"
     notion_headers = {
-        "Authorization": f"Bearer {notion_api_key}",
+        "Authorization": f"Bearer {NOTION_API_KEY}",
         "Notion-Version": "2022-06-28",
         "Content-Type": "application/json",
     }

@@ -19,7 +19,20 @@ dtype = "int16"
 duration = 30
 
 
-def record_audio(duration, samplerate, channels, dtype):
+def record_audio(
+    duration: int, samplerate: int, channels: int, dtype: str
+) -> np.ndarray:
+    """指定したパラメータで音声を録音します。
+
+    Args:
+        duration (int): 録音時間 (秒)
+        samplerate (int): サンプリングレート
+        channels (int): チャンネル数
+        dtype (str): データ型
+
+    Returns:
+        np.ndarray: 録音された音声データ
+    """
     recording = sd.rec(
         int(samplerate * duration),
         samplerate=samplerate,
@@ -30,7 +43,12 @@ def record_audio(duration, samplerate, channels, dtype):
     return recording
 
 
-def send_to_api(text):
+def send_to_api(text: str) -> None:
+    """テキストデータをAPIに送信します。
+
+    Args:
+        text (str): 送信するテキスト
+    """
     url = "http://127.0.0.1:8000/archive"
     headers = {"Content-Type": "application/json"}
     data = {"message": text}
@@ -41,7 +59,20 @@ def send_to_api(text):
         print("Error sending text to API:", response.status_code, response.text)
 
 
-def convert_to_wav(data, samplerate, channels, dtype):
+def convert_to_wav(
+    data: np.ndarray, samplerate: int, channels: int, dtype: str
+) -> io.BytesIO:
+    """NumPy配列の音声データをWAV形式に変換します。
+
+    Args:
+        data (np.ndarray): 音声データ
+        samplerate (int): サンプリングレート
+        channels (int): チャンネル数
+        dtype (str): データ型
+
+    Returns:
+        io.BytesIO: WAV形式の音声データ
+    """
     byte_io = io.BytesIO()
     with wave.open(byte_io, "wb") as wav_file:
         wav_file.setnchannels(channels)
@@ -52,7 +83,12 @@ def convert_to_wav(data, samplerate, channels, dtype):
     return byte_io
 
 
-def transcribe_audio(audio_stream):
+def transcribe_audio(audio_stream: io.BytesIO) -> None:
+    """音声データをテキストに変換し、結果をAPIに送信します。
+
+    Args:
+        audio_stream (io.BytesIO): WAV形式の音声データ
+    """
     headers = {
         "Authorization": f"Bearer {OPENAI_API_KEY}",
     }
@@ -72,11 +108,22 @@ def transcribe_audio(audio_stream):
         print("Error:", response.status_code, response.json())
 
 
-def process_audio(data):
+def process_audio(data: np.ndarray) -> None:
+    """音声データを処理して、テキスト変換とAPI送信を行います。
+
+    Args:
+        data (np.ndarray): 録音された音声データ
+    """
     audio_stream = convert_to_wav(data, samplerate, channels, dtype)
     threading.Thread(target=transcribe_audio, args=(audio_stream,)).start()
 
 
-while True:
-    audio_data = record_audio(duration, samplerate, channels, dtype)
-    process_audio(audio_data)
+def main():
+    """アプリケーションのメインループです。ユーザーが中断するまで繰り返し音声を録音し、処理します。"""
+    while True:
+        audio_data = record_audio(duration, samplerate, channels, dtype)
+        process_audio(audio_data)
+
+
+if __name__ == "__main__":
+    main()
