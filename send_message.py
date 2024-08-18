@@ -10,10 +10,7 @@ from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 load_dotenv()
 
-required_keys = [
-    "GOOGLE_API_KEY",
-    "NOTION_API_KEY",
-]
+required_keys = ["GOOGLE_API_KEY", "NOTION_API_KEY", "NOTION_PAGE_ID"]
 not_set = []
 for key in required_keys:
     if not os.getenv(key):
@@ -25,6 +22,7 @@ if len(not_set) > 0:
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or ""
 NOTION_API_KEY = os.getenv("NOTION_API_KEY") or ""
+NOTION_PAGE_ID = os.getenv("NOTION_PAGE_ID") or ""
 
 genai.configure(api_key=GOOGLE_API_KEY)
 
@@ -120,8 +118,7 @@ The information should be provided on a single line without line breaks. Please 
     except json.JSONDecodeError:
         content = response_data["candidates"][0]["content"]["parts"][0]["text"]
 
-    page_id = ""
-    block_id = get_last_block_id(page_id)
+    block_id = get_last_block_id(NOTION_PAGE_ID)
     if not block_id:
         return "Failed to find the last block in the page."
 
